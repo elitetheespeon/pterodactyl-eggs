@@ -1,0 +1,50 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v1",
+        "update_url": null
+    },
+    "exported_at": "2021-06-21T06:22:27-04:00",
+    "name": "SRB2 Kart",
+    "author": "espeon@espeon.dev",
+    "description": "SRB2Kart is a classic styled kart racer, complete with beautiful courses, and wacky items. Of course, because it\u2019s SRB2Kart, it has a Sonic twist that really shows the classic charm that a lot of us know and love from the good old days.",
+    "features": null,
+    "images": [
+        "quay.io\/espydev\/p-images:ubuntu_sdl"
+    ],
+    "file_denylist": [],
+    "startup": ".\/srb2kart -dedicated -port {{SERVER_PORT}} -file $(sh -c 'ls -1 .\/addons | egrep \\(.wad\\|.kart\\|.pk3\\|.lua\\)$ ')",
+    "config": {
+        "files": "{\r\n    \".srb2kart\/kartserv.cfg\": {\r\n        \"parser\": \"file\",\r\n        \"find\": {\r\n            \"servername\": \"servername \\\"{{server.build.env.SERVER_NAME}}\\\"\",\r\n            \"maxplayers\": \"maxplayers \\\"{{server.build.env.MAX_PLAYERS}}\\\"\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"Entering main game loop\",\r\n    \"userInteraction\": []\r\n}",
+        "logs": "{\r\n    \"custom\": false,\r\n    \"location\": \"logs\/latest.log\"\r\n}",
+        "stop": "quit"
+    },
+    "scripts": {
+        "installation": {
+            "script": "apt update\r\napt install -y curl\r\n\r\ncd \/mnt\/server\r\ncurl -sSL -o srb2kart.tgz https:\/\/faceservers.com\/game-filez\/srb2kart.tgz\r\ntar xvfz srb2kart.tgz\r\nrm -rf srb2kart.tgz\r\n\r\nchmod +x srb2kart\r\nmv bonuschars.kart .\/addons\/",
+            "container": "ubuntu:18.04",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Server Name",
+            "description": "Your server name, this is the name that will show in the server list!",
+            "env_variable": "SERVER_NAME",
+            "default_value": "A new FaceServers.com Kart Server!",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:50"
+        },
+        {
+            "name": "Max Players",
+            "description": "The maximum amount of players the server will allow to be connected at once.",
+            "env_variable": "MAX_PLAYERS",
+            "default_value": "8",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|numeric|max:20"
+        }
+    ]
+}

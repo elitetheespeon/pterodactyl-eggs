@@ -1,0 +1,113 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v1",
+        "update_url": null
+    },
+    "exported_at": "2021-06-21T06:21:33-04:00",
+    "name": "Counter-Strike: Global Offensive",
+    "author": "espeon@espeon.dev",
+    "description": "Counter-Strike: Global Offensive is a multiplayer first-person shooter video game developed by Hidden Path Entertainment and Valve Corporation.",
+    "features": null,
+    "images": [
+        "quay.io\/pterodactyl\/core:source"
+    ],
+    "file_denylist": [],
+    "startup": ".\/srcds_run -game csgo -console -port {{SERVER_PORT}} +ip 0.0.0.0 +map {{SRCDS_MAP}} -strictportbind +sv_setsteamaccount {{STEAM_ACC}} -autoupdate -steam_dir steamcmd -steamcmd_script update.txt -maxplayers_override {{MAX_PLAYERS}} +game_type {{GAME_TYPE}} +game_mode {{GAME_MODE}} -tickrate {{TICKRATE}} $( [ \"$NOHLTV\" == \"0\" ] || printf %s '-nohltv' ) $( [ \"$NOVAC\" == \"0\" ] || printf %s '-insecure' )  -norestart",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": \"Connection to Steam servers successful\",\r\n    \"userInteraction\": []\r\n}",
+        "logs": "{\r\n    \"custom\": true,\r\n    \"location\": \"logs\/latest.log\"\r\n}",
+        "stop": "quit"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\n# steamcmd Base Installation Script\r\n#\r\n# Server Files: \/mnt\/server\r\n# Image to install with is 'ubuntu:18.04'\r\napt -y update\r\napt -y --no-install-recommends install curl lib32gcc1 ca-certificates\r\n\r\n## just in case someone removed the defaults.\r\nif [ \"${STEAM_USER}\" == \"\" ]; then\r\n    STEAM_USER=anonymous\r\n    STEAM_PASS=\"\"\r\n    STEAM_AUTH=\"\"\r\nfi\r\n\r\n## download and install steamcmd\r\ncd \/tmp\r\nmkdir -p \/mnt\/server\/steamcmd\r\ncurl -sSL -o steamcmd.tar.gz https:\/\/steamcdn-a.akamaihd.net\/client\/installer\/steamcmd_linux.tar.gz\r\ntar -xzvf steamcmd.tar.gz -C \/mnt\/server\/steamcmd\r\ncd \/mnt\/server\/steamcmd\r\n\r\n## create autoupdate file\r\ncat >> update.txt << EOF\r\n@ShutdownOnFailedCommand 1 \/\/set to 0 if updating multiple servers at once\r\n@NoPromptForPassword 1\r\nlogin anonymous \r\nforce_install_dir ..\/\r\napp_update ${SRCDS_APPID}\r\nquit\r\nEOF\r\n\r\n# SteamCMD fails otherwise for some reason, even running as root.\r\n# This is changed at the end of the install process anyways.\r\nchown -R root:root \/mnt\r\nexport HOME=\/mnt\/server\r\n\r\n## install game using steamcmd\r\n.\/steamcmd.sh +login ${STEAM_USER} ${STEAM_PASS} ${STEAM_AUTH} +force_install_dir \/mnt\/server +app_update ${SRCDS_APPID} ${EXTRA_FLAGS} +quit ## other flags may be needed depending on install. looking at you cs 1.6\r\n\r\n## set up 32 bit libraries\r\nmkdir -p \/mnt\/server\/.steam\/sdk32\r\ncp -v linux32\/steamclient.so ..\/.steam\/sdk32\/steamclient.so\r\n\r\n## set up 64 bit libraries\r\nmkdir -p \/mnt\/server\/.steam\/sdk64\r\ncp -v linux64\/steamclient.so ..\/.steam\/sdk64\/steamclient.so",
+            "container": "ubuntu:18.04",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Map",
+            "description": "The default map for the server.",
+            "env_variable": "SRCDS_MAP",
+            "default_value": "de_dust2",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|alpha_dash"
+        },
+        {
+            "name": "Steam Account Token",
+            "description": "The Steam Account Token required for the server to be displayed publicly.",
+            "env_variable": "STEAM_ACC",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|alpha_num|size:32"
+        },
+        {
+            "name": "Source AppID",
+            "description": "Required for game to update on server restart. Do not modify this.",
+            "env_variable": "SRCDS_APPID",
+            "default_value": "740",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:20"
+        },
+        {
+            "name": "Max Players",
+            "description": "Maximum amount of players that can connect to the server. Once this number of players is reached, the server is considered full and cannot accept any more players until a slot is freed.",
+            "env_variable": "MAX_PLAYERS",
+            "default_value": "32",
+            "user_viewable": true,
+            "user_editable": false,
+            "rules": "required|numeric|max:32"
+        },
+        {
+            "name": "Tickrate",
+            "description": "The tick rate, sometimes known as the update rate, is defined as the number of ticks per second. Currently, default CSGO servers run at 64 tick, meaning that players receive updates from those servers 64 times per second.",
+            "env_variable": "TICKRATE",
+            "default_value": "64",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|numeric|max:144"
+        },
+        {
+            "name": "Game Mode",
+            "description": "This command can be used with the game_type command to change the game you are playing (e.g. arms race, competitive, etc). See https:\/\/developer.valvesoftware.com\/wiki\/CSGO_Game_Mode_Commands for combinations and help.",
+            "env_variable": "GAME_MODE",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|numeric|max:5"
+        },
+        {
+            "name": "Game Type",
+            "description": "This command can be used with the game_mode command to change the game you are playing (e.g. arms race, competitive, etc). See https:\/\/developer.valvesoftware.com\/wiki\/CSGO_Game_Mode_Commands for combinations and help.",
+            "env_variable": "GAME_TYPE",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|numeric|max:5"
+        },
+        {
+            "name": "Disable VAC",
+            "description": "Disables Valve Anti-Cheat module on the server.",
+            "env_variable": "NOVAC",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean|max:1"
+        },
+        {
+            "name": "Disable HLTV",
+            "description": "Disables HLTV feature.",
+            "env_variable": "NOHLTV",
+            "default_value": "0",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|boolean|max:1"
+        }
+    ]
+}

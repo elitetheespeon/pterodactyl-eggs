@@ -1,0 +1,95 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v1",
+        "update_url": null
+    },
+    "exported_at": "2021-06-21T06:22:06-04:00",
+    "name": "Garry's Mod 9",
+    "author": "espeon@espeon.dev",
+    "description": "Garry's Mod 9 is a Source Mod made by Garry Newman. Garry's Mod 9 is a physics sandbox. There aren't any predefined aims or goals. We give you the tools and leave you to play. You spawn objects and weld them together to create your own contraptions - whether that's a car, a rocket, a catapult or something that doesn't have a name yet - that's up to you.",
+    "features": null,
+    "images": [
+        "quay.io\/parkervcp\/pterodactyl-images:debian_wine-4"
+    ],
+    "file_denylist": [],
+    "startup": "rmv() { echo -e \"stoppping server\"; .\/rcon -a 127.0.0.1:{{SERVER_PORT}} -p {{RCON_PASS}} -c _restart;};trap rmv 15;WINEDEBUG=-all \/usr\/bin\/wine start \/wait srcds.exe -console -game gmod9 +map {{SRCDS_MAP}} +ip 0.0.0.0 -port {{SERVER_PORT}} +maxplayers {{MAX_PLAYERS}} -tickrate {{TICKRATE}} -condebug -insecure & tail -f gmod9\/console.log & until echo \"waiting for rcon connection...\";.\/rcon -a 127.0.0.1:{{SERVER_PORT}} -p {{RCON_PASS}};do sleep 5;done",
+    "config": {
+        "files": "{\r\n    \"gmod9\/cfg\/server.cfg\": {\r\n        \"parser\": \"file\",\r\n        \"find\": {\r\n            \"hostname\": \"hostname \\\"{{server.build.env.SERVERNAME}}\\\"\",\r\n            \"rcon_password\": \"rcon_password \\\"{{server.build.env.RCON_PASS}}\\\"\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"Waiting commands for\",\r\n    \"userInteraction\": []\r\n}",
+        "logs": "{}",
+        "stop": ":q"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\n# steamcmd Base Installation Script\r\n#\r\n# Server Files: \/mnt\/server\r\n# Image to install with is 'debian:buster-slim'\r\n\r\n##\r\n#\r\n# Variables\r\n# STEAM_USER, STEAM_PASS, STEAM_AUTH - Steam user setup. If a user has 2fa enabled it will most likely fail due to timeout. Leave blank for anon install.\r\n# WINDOWS_INSTALL - if it's a windows server you want to install set to 1\r\n# SRCDS_APPID - steam app id ffound here - https:\/\/developer.valvesoftware.com\/wiki\/Dedicated_Servers_List\r\n# EXTRA_FLAGS - when a server has extra glas for things like beta installs or updates.\r\n#\r\n##\r\nDEBIAN_FRONTEND=noninteractive\r\n\r\napt -y update\r\napt -y --no-install-recommends install curl lib32gcc1 ca-certificates\r\n\r\n## just in case someone removed the defaults.\r\nif [ \"${STEAM_USER}\" == \"\" ]; then\r\n    echo -e \"steam user is not set.\\n\"\r\n    echo -e \"Using anonymous user.\\n\"\r\n    STEAM_USER=anonymous\r\n    STEAM_PASS=\"\"\r\n    STEAM_AUTH=\"\"\r\nelse\r\n    echo -e \"user set to ${STEAM_USER}\"\r\nfi\r\n\r\n## download and install steamcmd\r\ncd \/tmp\r\nmkdir -p \/mnt\/server\/steamcmd\r\ncurl -sSL -o steamcmd.tar.gz https:\/\/steamcdn-a.akamaihd.net\/client\/installer\/steamcmd_linux.tar.gz\r\ntar -xzvf steamcmd.tar.gz -C \/mnt\/server\/steamcmd\r\ncd \/mnt\/server\/steamcmd\r\n\r\n# SteamCMD fails otherwise for some reason, even running as root.\r\n# This is changed at the end of the install process anyways.\r\nchown -R root:root \/mnt\r\nexport HOME=\/mnt\/server\r\n\r\n## install game using steamcmd\r\n.\/steamcmd.sh +login ${STEAM_USER} ${STEAM_PASS} ${STEAM_AUTH} $( [[ \"${WINDOWS_INSTALL}\" == \"1\" ]] && printf %s '+@sSteamCmdForcePlatformType windows' ) +force_install_dir \/mnt\/server +app_update ${SRCDS_APPID} ${EXTRA_FLAGS} validate +quit ## other flags may be needed depending on install. looking at you cs 1.6\r\n\r\n## set up 32 bit libraries\r\nmkdir -p \/mnt\/server\/.steam\/sdk32\r\ncp -v linux32\/steamclient.so ..\/.steam\/sdk32\/steamclient.so\r\n\r\n## set up 64 bit libraries\r\nmkdir -p \/mnt\/server\/.steam\/sdk64\r\ncp -v linux64\/steamclient.so ..\/.steam\/sdk64\/steamclient.so\r\n\r\n## Remove unneeded Steam libs\r\ncd \/mnt\/server\r\nrm -rf steamclient.dll\r\nrm -rf tier0_s.dll\r\nrm -rf vstdlib_s.dll\r\n\r\n## Download Gmod9 server files\r\ncd \/tmp\r\nmkdir -p \/mnt\/server\/gmod9\r\ncurl -sSL -o gmod9.tar.gz https:\/\/faceservers.com\/game-filez\/gmod9.tar.gz\r\n\r\n## Install Gmod9 server files\r\ntar -xzvf gmod9.tar.gz -C \/mnt\/server\/gmod9\r\n\r\n## Add working srcds files\r\ncd \/mnt\/server\r\nrm -rf srcds.exe\r\nrm -rf steam.dll\r\nrm -rf steamcmd\r\nrm -rf gmod9\/cfg\/server.cfg\r\ncurl -sSL -o srcds.exe https:\/\/faceservers.com\/game-filez\/srcds.exe\r\ncurl -sSL -o steam.dll https:\/\/faceservers.com\/game-filez\/steam.dll\r\ncurl -sSL -o gmod9\/cfg\/server.cfg https:\/\/faceservers.com\/game-filez\/server.cfg\r\n\r\n## Add RCON lib\r\ncurl -sSL -o rcon https:\/\/faceservers.com\/game-filez\/rcon\r\nchmod +x rcon\r\n\r\n## Add pteroignore for backup\r\ncurl -sSL -o .pteroignore https:\/\/faceservers.com\/game-filez\/pteroignore",
+            "container": "debian:buster-slim",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Steam Server App ID",
+            "description": "",
+            "env_variable": "SRCDS_APPID",
+            "default_value": "205",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|numeric"
+        },
+        {
+            "name": "Windows Install Flag",
+            "description": "Required for windows game server installs",
+            "env_variable": "WINDOWS_INSTALL",
+            "default_value": "1",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|boolean"
+        },
+        {
+            "name": "Server Name",
+            "description": "",
+            "env_variable": "SERVERNAME",
+            "default_value": "A New FaceServers Hosted Server",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string"
+        },
+        {
+            "name": "Map",
+            "description": "The default map for the server.",
+            "env_variable": "SRCDS_MAP",
+            "default_value": "gm_construct",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|alpha_dash"
+        },
+        {
+            "name": "Max Players",
+            "description": "The maximum amount of players allowed on your game server.",
+            "env_variable": "MAX_PLAYERS",
+            "default_value": "32",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|max:128"
+        },
+        {
+            "name": "Tickrate",
+            "description": "The tickrate defines how fast the server will update each entities location.",
+            "env_variable": "TICKRATE",
+            "default_value": "66",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|integer|max:100"
+        },
+        {
+            "name": "RCON Password",
+            "description": "The RCON password for your server. Set this to something secure.",
+            "env_variable": "RCON_PASS",
+            "default_value": "changemeplsibegofyou555",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:32"
+        }
+    ]
+}

@@ -1,0 +1,31 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v1",
+        "update_url": null
+    },
+    "exported_at": "2021-06-21T06:21:17-04:00",
+    "name": "Drawpile",
+    "author": "espeon@espeon.dev",
+    "description": "Drawpile is a Free software collaborative drawing program that allows multiple users to sketch on the same canvas simultaneously.",
+    "features": null,
+    "images": [
+        "quay.io\/espydev\/p-images:alpine_qt"
+    ],
+    "file_denylist": [],
+    "startup": ".\/drawpile-srv --listen 0.0.0.0 --port {{SERVER_PORT}} --config drawpile.cfg",
+    "config": {
+        "files": "{}",
+        "startup": "{\r\n    \"done\": \"Started listening on port\",\r\n    \"userInteraction\": []\r\n}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "cd \/mnt\/server\/\r\nwget https:\/\/faceservers.com\/game-filez\/drawpile-srv\r\nchmod +x drawpile-srv",
+            "container": "alpine:3.9.5",
+            "entrypoint": "ash"
+        }
+    },
+    "variables": []
+}
