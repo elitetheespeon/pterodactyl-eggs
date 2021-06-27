@@ -13,7 +13,7 @@
         "quay.io\/parkervcp\/pterodactyl-images:ubuntu_source"
     ],
     "file_denylist": [],
-    "startup": ".\/hlds_run -console -game {{HLDS_GAME}} -port {{SERVER_PORT}} -sport {{VAC_PORT}} +map {{SRCDS_MAP}} +ip 0.0.0.0 -strictportbind -norestart +maxplayers {{MAX_PLAYERS}}",
+    "startup": ".\/hlds_run -console -game {{HLDS_GAME}} -port {{SERVER_PORT}} -sport {{VAC_PORT}} +map {{SRCDS_MAP}} +ip 0.0.0.0 -strictportbind -norestart +maxplayers {{MAX_PLAYERS}} +sys_ticrate {{TICKRATE}}, +pingboost {{PINGBOOST}}",
     "config": {
         "files": "{}",
         "startup": "{\r\n    \"done\": \"Connection to Steam servers successful\",\r\n    \"userInteraction\": []\r\n}",
@@ -72,6 +72,24 @@
             "user_viewable": true,
             "user_editable": false,
             "rules": "required|string|max:32"
+        },
+        {
+            "name": "Tickrate",
+            "description": "The tick rate, sometimes known as the update rate, is defined as the number of ticks per second. Currently, default CS 1.6 servers run at 100 tick.",
+            "env_variable": "TICKRATE",
+            "default_value": "100",
+            "user_viewable": true,
+            "user_editable": false,
+            "rules": "required|numeric|max:1000"
+        },
+        {
+            "name": "Pingboost",
+            "description": "All the pingboost modes attempt to reduce the latency caused by the server. The default implementation adds around 20msec to each players ping (under linux). Modes are from 1 to 3, 3 minimises the latency to the minimum possible (this cause a lot of CPU usage).",
+            "env_variable": "PINGBOOST",
+            "default_value": "1",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|numeric|max:3"
         }
     ]
 }
